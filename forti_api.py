@@ -44,12 +44,30 @@ def apicheck(fn):
 
 
 def update_redis(key, db=0, data=datetime.datetime.now().strftime("%Y-%b-%d %H:%M")):
+  '''
+  Update / add item to redis
+  :param key: redis key
+  :type key: str
+  :param db: redis index
+  :type db: int
+  :param data: data to store in key
+  :type data: str
+  :return: True / False
+  :rtype: bool
+  '''
   r = redis.StrictRedis(settings.redis_host, port=6379, db=db, password=settings.redis_auth)
   h = r.set(key, data)
   return h
 
 
 def get_addressgroup(group_name):
+  '''
+  Get members in address group
+  :param group_name: Name of the address group
+  :type group_name: str
+  :return: All members in the address group
+  :rtype: arr
+  '''
   headers = {'Authorization': 'Bearer {}'.format(settings.access_token) }
   url = 'http://{}/api/v2/cmdb/firewall/addrgrp/{}'.format(settings.fw['fqdn'], group_name)
   params = {'vdom':settings.vdom}
@@ -60,6 +78,15 @@ def get_addressgroup(group_name):
 
 
 def create_address(name, subnet):
+  '''
+  Create an address object 
+  :param name: Name och the object
+  :type name: str
+  :param subnet: subnet for the address object
+  :type subnet: str
+  :return: True :)
+  :rtype: bool
+  '''
   headers = {'Authorization': 'Bearer {}'.format(settings.access_token) }
   url = 'https://{}/api/v2/cmdb/firewall/address'.format(settings.fw['fqdn'])
   params = {'vdom':settings.vdom}
@@ -71,6 +98,17 @@ def create_address(name, subnet):
   
 
 def add_to_addressgroup(group_name, members, new_member):
+  '''
+  Add address object to address group
+  :param group_name: Name of the address group to add to
+  :type group_name: str
+  :param members: Already existing members of that goup
+  :type members: arr
+  :param new_members: The name of the member to add to the group
+  :type new_member: str
+  :return: True :)
+  :rtype: bool
+  '''
   l = []
   headers = {'Authorization': 'Bearer {}'.format(settings.access_token) }
   url = 'https://{}/api/v2/cmdb/firewall/addrgrp/{}'.format(settings.fw['fqdn'], group_name)
@@ -95,15 +133,21 @@ def auth():
 
 @bottle.get('/forti_api/v1/ipv4list')
 def ipv4list():
-    r = redis.StrictRedis(settings.redis_host, port=6379, db=1, password=settings.redis_auth)
-    pattern = '*'
-    bottle.response.status = 200
-    return bottle.template('ip_list.html', blocklist=r.keys(pattern))
+  '''
+  Return all ip's in a specific database index
+  '''
+  r = redis.StrictRedis(settings.redis_host, port=6379, db=1, password=settings.redis_auth)
+  pattern = '*'
+  bottle.response.status = 200
+  return bottle.template('ip_list.html', blocklist=r.keys(pattern))
 
 
 @bottle.post('/forti_api/v1/redis_blocklist')
 @apicheck
 def redis_blocklist():
+  '''
+  Add ip to redis index
+  '''
   try:
     byte = bottle.request.body
     data = json.loads(byte.read().decode('UTF-8'))
@@ -140,6 +184,12 @@ def redis_blocklist():
 @bottle.post('/forti_api/v1/autoban')
 @apicheck
 def autoban():
+  '''
+  Create an address object and add that to a address group.
+
+  .. Warning::
+     Address groups have a max limit of 300 members.
+  '''
   try:
     byte = bottle.request.body
     data = json.loads(byte.read().decode('UTF-8'))
