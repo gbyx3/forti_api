@@ -185,6 +185,7 @@ def redis_blocklist():
 @apicheck
 def autoban():
   '''
+  DEPRECATED - due to limitations in address group size
   Create an address object and add that to a address group.
 
   .. Warning::
