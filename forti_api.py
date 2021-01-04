@@ -139,7 +139,7 @@ def ipv4list():
   r = redis.StrictRedis(settings.redis_host, port=6379, db=1, password=settings.redis_auth)
   pattern = '*'
   bottle.response.status = 200
-  return bottle.template('ip_list.html', blocklist=r.keys(pattern))
+  return bottle.template('ip_list.html', blocklist=r.keys(pattern), your_location=settings.your_location)
 
 
 @bottle.post('/forti_api/v1/redis_blocklist')
